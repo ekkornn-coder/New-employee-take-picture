@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<title>HRPro · Onboarding</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+<style>
+:root{
+  --bg:#f0f2f7;--bg2:#e4e7f0;--white:#fff;
+  --border:#dde1ec;--border2:#c8cede;
+  --text:#18192a;--text2:#545870;--text3:#8e94ad;
+  --accent:#1d4ed8;--accent-l:#eff4ff;--accent-m:#c7d7ff;
+  --gold:#c47d0a;--gold-l:#fef3c7;
+  --green:#059669;--green-l:#d1fae5;--green-d:#047857;
+  --red:#dc2626;--red-l:#fee2e2;
+  --orange:#ea580c;--orange-l:#ffedd5;
+  --sh:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;overscroll-behavior:none;}
+
+/* ── TOPBAR ── */
+.topbar{
+  background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 16px;padding-top:var(--safe-top);
+  height:calc(54px + var(--safe-top));
+  display:flex;align-items:flex-end;padding-bottom:10px;
+  justify-content:space-between;position:sticky;top:0;z-index:300;
+}
+.logo{display:flex;align-items:center;gap:9px;}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0;}
+.logo-text{font-size:15px;font-weight:600;}
+.logo-div{width:1px;height:16px;background:var(--border2);}
+.logo-sub{font-size:12px;color:var(--text3);}
+.device-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.04em;}
+.device-pc{background:var(--accent-l);color:var(--accent);}
+.device-phone{background:var(--green-l);color:var(--green);}
+.status-chip{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--text2);background:var(--bg);border:1px solid var(--border);padding:5px 11px;border-radius:20px;}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--border2);transition:background .3s;}
+.sdot.green{background:var(--green);box-shadow:0 0 0 3px var(--green-l);}
+.sdot.blue{background:var(--accent);box-shadow:0 0 0 3px var(--accent-l);}
+.sdot.orange{background:var(--orange);box-shadow:0 0 0 3px var(--orange-l);}
+
+/* ── MODE BAR ── */
+.mode-bar{background:var(--white);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;gap:8px;}
+.mbtn{flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--border2);background:var(--bg);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .18s;min-height:44px;}
+.mbtn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+/* ── STEPPER ── */
+.stepper{background:var(--white);border-bottom:1px solid var(--border);padding:0 10px;display:flex;align-items:center;justify-content:center;height:46px;}
+.si{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--text3);}
+.si.active{color:var(--accent);}
+.si.done{color:var(--green);}
+.sc{width:21px;height:21px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;transition:all .2s;}
+.si.done .sc{background:var(--green);border-color:var(--green);color:#fff;}
+.si.active .sc{background:var(--accent);border-color:var(--accent);color:#fff;}
+.sline{width:20px;height:1px;background:var(--border2);margin:0 2px;flex-shrink:0;}
+
+/* ── CONTENT ── */
+.content{padding:14px 14px calc(24px + var(--safe-bot));max-width:480px;margin:0 auto;width:100%;}
+
+/* ── CARD ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:var(--sh);margin-bottom:12px;}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.card-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);}
+
+/* ── TAGS ── */
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;}
+.tag-blue{background:var(--accent-l);color:var(--accent);}
+.tag-green{background:var(--green-l);color:var(--green);}
+.tag-gold{background:var(--gold-l);color:var(--gold);}
+.tag-orange{background:var(--orange-l);color:var(--orange);}
+.tag-red{background:var(--red-l);color:var(--red);}
+
+/* ── BUTTONS ── */
+.btn{border:none;border-radius:12px;padding:13px 16px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .14s;display:flex;align-items:center;justify-content:center;gap:7px;min-height:48px;}
+.btn-p{background:var(--accent);color:#fff;}
+.btn-p:hover,.btn-p:active{background:#1a42b8;}
+.btn-s{background:var(--bg);color:var(--text2);border:1px solid var(--border2);}
+.btn-s:hover,.btn-s:active{background:var(--bg2);}
+.btn-g{background:var(--green);color:#fff;}
+.btn-g:hover,.btn-g:active{background:var(--green-d);}
+.btn-row{display:flex;gap:8px;}
+.btn-row .btn{flex:1;}
+.btn-full{width:100%;}
+
+/* ── EMP INPUT ── */
+.emp-label{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px;}
+.emp-input-wrap{position:relative;margin-bottom:10px;}
+.emp-input{width:100%;background:var(--bg);border:2px solid var(--border);border-radius:12px;color:var(--text);font-size:28px;font-family:'DM Mono',monospace;font-weight:500;padding:14px 44px 14px 14px;outline:none;letter-spacing:4px;transition:border-color .2s,background .2s;text-align:center;}
+.emp-input:focus{border-color:var(--accent);background:var(--white);}
+.emp-input.filled{border-color:var(--green);background:var(--green-l);color:var(--green);}
+.emp-clear{position:absolute;right:11px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;border:none;background:var(--border2);color:var(--text2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .15s;}
+.emp-clear.show{opacity:1;pointer-events:all;}
+.emp-dots{display:flex;gap:7px;justify-content:center;margin-top:10px;}
+.edot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--border2);background:transparent;transition:all .12s;}
+.edot.filled{background:var(--accent);border-color:var(--accent);}
+.edot.complete{background:var(--green);border-color:var(--green);transform:scale(1.15);}
+@keyframes flashGreen{0%,100%{background:var(--bg);}50%{background:var(--green-l);}}
+.emp-input.pulse{animation:flashGreen .35s ease;}
+
+/* ── FOLDER ROW ── */
+.folder-row{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.folder-row-icon{font-size:18px;flex-shrink:0;}
+.folder-row-info{flex:1;min-width:0;}
+.folder-row-label{font-size:10px;color:var(--text3);}
+.folder-row-name{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.folder-row-btn{padding:5px 10px!important;font-size:11px!important;flex-shrink:0;min-height:32px!important;border-radius:8px!important;}
+
+/* ── SCAN VIEWPORT ── */
+.scan-vp{position:relative;background:#000;border-radius:14px;overflow:hidden;aspect-ratio:1/1;border:1px solid var(--border);max-height:60vw;}
+#scan-video{width:100%;height:100%;object-fit:cover;display:block;}
+.scan-ov{position:absolute;inset:0;pointer-events:none;}
+.dim-t{position:absolute;top:0;left:0;right:0;height:18%;background:rgba(0,0,0,.5);}
+.dim-b{position:absolute;bottom:0;left:0;right:0;height:18%;background:rgba(0,0,0,.5);}
+.dim-l{position:absolute;top:18%;bottom:18%;left:0;width:8%;background:rgba(0,0,0,.5);}
+.dim-r{position:absolute;top:18%;bottom:18%;right:0;width:8%;background:rgba(0,0,0,.5);}
+.scan-frame{position:absolute;top:18%;left:8%;right:8%;bottom:18%;border:2.5px solid rgba(255,255,255,.6);border-radius:10px;}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#f5c842,transparent);animation:scanMv 1.8s ease-in-out infinite;}
+@keyframes scanMv{0%,100%{top:2px;}50%{top:calc(100% - 4px);}}
+.sc-tl,.sc-tr,.sc-bl,.sc-br{position:absolute;width:22px;height:22px;border-color:#f5c842;border-style:solid;}
+.sc-tl{top:17.5%;left:7.5%;border-width:3px 0 0 3px;border-radius:4px 0 0 0;}
+.sc-tr{top:17.5%;right:7.5%;border-width:3px 3px 0 0;border-radius:0 4px 0 0;}
+.sc-bl{bottom:17.5%;left:7.5%;border-width:0 0 3px 3px;border-radius:0 0 0 4px;}
+.sc-br{bottom:17.5%;right:7.5%;border-width:0 3px 3px 0;border-radius:0 0 4px 0;}
+.scan-tip-ov{position:absolute;bottom:11%;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:5px 14px;border-radius:20px;white-space:nowrap;}
+.scan-flash{position:absolute;inset:0;background:rgba(5,150,105,.38);opacity:0;pointer-events:none;transition:opacity .15s;}
+.scan-flash.show{opacity:1;}
+.scan-found-ov{position:absolute;top:6%;left:50%;transform:translateX(-50%);background:rgba(5,150,105,.92);color:#fff;font-family:'DM Mono',monospace;font-size:16px;font-weight:600;letter-spacing:3px;padding:6px 18px;border-radius:20px;white-space:nowrap;opacity:0;transition:opacity .2s;}
+.scan-found-ov.show{opacity:1;}
+
+/* ── BADGE CAMERA ── */
+.cam-wrap{position:relative;background:#111;border-radius:14px;overflow:hidden;border:1px solid var(--border);}
+.cam-wrap.portrait{aspect-ratio:3/4;}
+.cam-wrap.square{aspect-ratio:1/1;}
+#video{width:100%;height:100%;object-fit:cover;display:block;}
+#canvas-capture{display:none;}
+.b-ov{position:absolute;inset:0;pointer-events:none;}
+.b-top{position:absolute;top:0;left:0;right:0;height:8%;background:rgba(0,0,0,.38);}
+.b-bot{position:absolute;bottom:0;left:0;right:0;height:11%;background:rgba(0,0,0,.38);}
+.b-left{position:absolute;top:8%;bottom:11%;left:0;width:14%;background:rgba(0,0,0,.38);}
+.b-right{position:absolute;top:8%;bottom:11%;right:0;width:14%;background:rgba(0,0,0,.38);}
+.bc{position:absolute;width:20px;height:20px;border-color:#fff;border-style:solid;}
+.bc-tl{top:7.5%;left:13.5%;border-width:2.5px 0 0 2.5px;border-radius:3px 0 0 0;}
+.bc-tr{top:7.5%;right:13.5%;border-width:2.5px 2.5px 0 0;border-radius:0 3px 0 0;}
+.bc-bl{bottom:10.5%;left:13.5%;border-width:0 0 2.5px 2.5px;border-radius:0 0 0 3px;}
+.bc-br{bottom:10.5%;right:13.5%;border-width:0 2.5px 2.5px 0;border-radius:0 0 3px 0;}
+.b-gh{position:absolute;top:50%;left:14%;right:14%;height:1px;background:rgba(255,255,255,.15);}
+.b-gv{position:absolute;left:50%;top:8%;bottom:11%;width:1px;background:rgba(255,255,255,.15);}
+.b-head{position:absolute;top:11%;left:50%;transform:translateX(-50%);width:30%;aspect-ratio:1;border:1.5px dashed rgba(255,255,255,.5);border-radius:50%;}
+.b-shoulder{position:absolute;top:42%;left:19%;right:19%;height:1.5px;background:rgba(255,255,255,.28);border-radius:2px;}
+.b-tip{position:absolute;top:3.5%;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:#fff;background:rgba(0,0,0,.55);padding:3px 12px;border-radius:20px;white-space:nowrap;}
+.b-empid{position:absolute;bottom:4%;left:50%;transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:#fff;background:rgba(0,0,0,.65);padding:4px 16px;border-radius:20px;white-space:nowrap;letter-spacing:2px;}
+.cring{position:absolute;bottom:14%;left:50%;transform:translateX(-50%);width:64px;height:64px;display:none;}
+.cring.show{display:block;}
+.ring-svg{width:64px;height:64px;}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.2);stroke-width:5;}
+.ring-fg{fill:none;stroke:#f5c842;stroke-width:5;stroke-linecap:round;stroke-dasharray:170;stroke-dashoffset:170;transform:rotate(-90deg);transform-origin:50% 50%;}
+.ring-n{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;}
+.cam-tip{font-size:11px;color:var(--text3);text-align:center;margin-top:6px;}
+
+/* ── SHUTTER BUTTON (phone) ── */
+.shutter-wrap{display:flex;align-items:center;justify-content:center;gap:20px;margin-top:12px;}
+.shutter-btn{width:68px;height:68px;border-radius:50%;border:4px solid var(--accent);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.15);}
+.shutter-btn:active{transform:scale(.93);background:var(--accent-l);}
+.shutter-inner{width:52px;height:52px;border-radius:50%;background:var(--accent);}
+
+/* ── PREVIEW ── */
+.preview-wrap{position:relative;background:#000;border-radius:14px;overflow:hidden;border:1px solid var(--border);}
+.preview-wrap.portrait{aspect-ratio:3/4;}
+.preview-wrap.square{aspect-ratio:1/1;}
+#preview-img{width:100%;height:100%;object-fit:cover;display:block;}
+.prev-stamp{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:12px;color:#fff;background:rgba(0,0,0,.7);padding:4px 14px;border-radius:20px;white-space:nowrap;letter-spacing:2px;}
+
+/* ── SAVE ── */
+.save-item{display:flex;align-items:center;gap:11px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;}
+.save-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.save-info{flex:1;}
+.save-name{font-size:13px;font-weight:600;color:var(--text);}
+.save-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+.pbar{background:var(--border);border-radius:4px;height:3px;margin-top:7px;overflow:hidden;}
+.pfill{height:100%;background:var(--green);border-radius:4px;transition:width .3s ease;}
+.save-chk{font-size:20px;flex-shrink:0;}
+.ok-box{background:var(--green-l);border:1px solid #a7f3d0;border-radius:12px;padding:16px;text-align:center;margin-top:6px;}
+.ok-icon{font-size:34px;margin-bottom:6px;}
+.ok-title{font-size:15px;font-weight:600;color:var(--green);}
+.ok-sub{font-size:12px;color:var(--text2);margin-top:4px;word-break:break-all;}
+
+/* ── MISC ── */
+.hidden{display:none!important;}
+.pg{animation:pgIn .18s ease;}
+@keyframes pgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.divider{height:1px;background:var(--border);margin:12px 0;}
+.manual-input{width:100%;background:var(--bg);border:1.5px solid var(--border2);border-radius:10px;padding:11px 12px;font-family:'DM Mono',monospace;font-size:17px;letter-spacing:2px;color:var(--text);outline:none;text-align:center;transition:border-color .15s;}
+.manual-input:focus{border-color:var(--accent);}
+</style>
+</head>
+<body>
+<div style="display:flex;flex-direction:column;min-height:100vh;">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-mark">HR</div>
+    <span class="logo-text">HRPro</span>
+    <div class="logo-div"></div>
+    <span class="logo-sub">Onboarding</span>
+    <span class="device-badge" id="device-badge">PC</span>
+  </div>
+  <div class="status-chip">
+    <div class="sdot" id="sdot"></div>
+    <span id="stext">Ready</span>
+  </div>
+</div>
+
+<!-- MODE TOGGLE -->
+<div class="mode-bar">
+  <button class="mbtn active" id="mb1" onclick="setMode(1)">⌨️ Mode 1 · Normal</button>
+  <button class="mbtn" id="mb2" onclick="setMode(2)">📱 Mode 2 · Auto Scan</button>
+</div>
+
+<!-- STEPPER -->
+<div class="stepper">
+  <div class="si active" id="s0"><div class="sc">📁</div><span id="s0lbl">Setup</span></div>
+  <div class="sline"></div>
+  <div class="si" id="s1"><div class="sc">1</div><span id="s1lbl">Employee ID</span></div>
+  <div class="sline"></div>
+  <div class="si" id="s2"><div class="sc">2</div><span>Photo</span></div>
+  <div class="sline"></div>
+  <div class="si" id="s3"><div class="sc">3</div><span>Save</span></div>
+</div>
+
+<div class="content">
+
+<!-- ═══ PAGE 0: SETUP ═══ -->
+<div id="pg-folder" class="pg">
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-title">Save Location</span>
+      <span class="tag tag-blue" id="folder-setup-tag">⚙️ Setup</span>
+    </div>
+
+    <!-- PC folder picker -->
+    <div id="fs-pc">
+      <div style="background:var(--bg);border-radius:14px;padding:18px;text-align:center;margin-bottom:14px;">
+        <div style="font-size:38px;margin-bottom:8px;">📂</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:5px;">Choose Save Folder</div>
+        <div style="font-size:12px;color:var(--text3);line-height:1.7;">เลือกโฟลเดอร์สำหรับบันทึกรูปภาพ<br/>Select the folder where photos will be saved</div>
+      </div>
+      <div style="background:var(--accent-l);border:1px solid var(--accent-m);border-radius:12px;padding:13px;margin-bottom:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">📋 Default Location</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+          <span style="background:var(--white);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:600;">🖥️ Desktop</span>
+          <span style="color:var(--text3);">›</span>
+          <span style="background:var(--white);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:600;">📁 HR_Onboarding_Photo</span>
+        </div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.6;">Create this folder on your Desktop first if it doesn't exist, then click below.</div>
+      </div>
+      <button class="btn btn-p btn-full" style="font-size:15px;" onclick="pickFolderSetup()">📁 Choose Folder</button>
+      <button class="btn btn-s btn-full" style="margin-top:8px;font-size:12px;" onclick="skipFolderSetup()">Skip — use Downloads folder instead</button>
+    </div>
+
+    <!-- Phone: no folder picker, auto download -->
+    <div id="fs-phone" class="hidden">
+      <div style="background:var(--bg);border-radius:14px;padding:18px;text-align:center;margin-bottom:14px;">
+        <div style="font-size:38px;margin-bottom:8px;">📱</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:5px;">Phone Mode</div>
+        <div style="font-size:12px;color:var(--text3);line-height:1.7;">
+          Photos will be <strong>downloaded</strong> automatically to your phone's Downloads / Gallery after each employee.<br/><br/>
+          Then move them to Google Drive from your file manager.
+        </div>
+      </div>
+      <div style="background:var(--green-l);border:1px solid #a7f3d0;border-radius:12px;padding:12px;margin-bottom:14px;display:flex;gap:10px;">
+        <div style="font-size:20px;flex-shrink:0;">☁️</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.7;"><strong>Tip:</strong> Install the <strong>Google Drive app</strong> on your phone. Enable "Back up photos" or manually upload from Files app.</div>
+      </div>
+      <button class="btn btn-p btn-full" style="font-size:15px;" onclick="skipFolderSetup()">✓ Got it — Start Onboarding</button>
+    </div>
+
+    <!-- Done state -->
+    <div id="fs-done" class="hidden">
+      <div style="background:var(--green-l);border:1px solid #a7f3d0;border-radius:14px;padding:18px;text-align:center;margin-bottom:14px;">
+        <div style="font-size:34px;margin-bottom:8px;">✅</div>
+        <div style="font-size:14px;font-weight:600;color:var(--green);margin-bottom:6px;">Ready</div>
+        <div style="display:inline-flex;align-items:center;gap:6px;background:var(--white);border:1px solid #a7f3d0;border-radius:8px;padding:6px 14px;">
+          <span style="font-size:15px;">📁</span>
+          <span style="font-size:13px;font-weight:600;" id="fs-folder-name">Downloads</span>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px;">Photos will save here automatically</div>
+      </div>
+      <button class="btn btn-p btn-full" style="font-size:15px;" onclick="proceedToMain()">Start Onboarding →</button>
+      <button class="btn btn-s btn-full" style="margin-top:8px;font-size:12px;" id="fs-change-btn" onclick="showFsSetup()">📁 Change Folder</button>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:var(--accent-m);background:var(--accent-l);" id="pc-tip-card">
+    <div style="display:flex;gap:10px;align-items:flex-start;">
+      <div style="font-size:18px;flex-shrink:0;">💡</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.7;"><strong>Google Drive users:</strong> Choose your Google Drive sync folder directly (e.g. <code style="font-family:monospace;">G:\My Drive\HR_Onboarding_Photo</code>) — photos will upload automatically.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAGE 1A: TYPE (Mode 1) ═══ -->
+<div id="pg-type" class="pg hidden">
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-title">Employee Number</span>
+      <span class="tag tag-blue">⌨️ Type / Scan</span>
+    </div>
+    <div class="emp-label">รหัสพนักงาน / Employee ID <span style="color:var(--text3)">(8 digits)</span></div>
+    <div class="emp-input-wrap">
+      <input class="emp-input" id="emp-input" type="text" inputmode="numeric"
+        maxlength="8" placeholder="· · · · · · · ·" autocomplete="off"/>
+      <button class="emp-clear" id="emp-clear" onclick="clearEmp()">✕</button>
+    </div>
+    <div class="emp-dots">
+      <div class="edot" id="ed0"></div><div class="edot" id="ed1"></div>
+      <div class="edot" id="ed2"></div><div class="edot" id="ed3"></div>
+      <div class="edot" id="ed4"></div><div class="edot" id="ed5"></div>
+      <div class="edot" id="ed6"></div><div class="edot" id="ed7"></div>
+    </div>
+    <div class="folder-row">
+      <div class="folder-row-icon">📁</div>
+      <div class="folder-row-info">
+        <div class="folder-row-label">Saving to</div>
+        <div class="folder-row-name" id="p1-folder-name">—</div>
+      </div>
+      <button class="btn btn-s folder-row-btn" onclick="goChangeFolder()">Change</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAGE 1B: CAMERA SCAN (Mode 2) ═══ -->
+<div id="pg-scan" class="pg hidden">
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-title">Barcode Scanner</span>
+      <span class="tag tag-orange" id="scan-tag">📷 Scanning…</span>
+    </div>
+    <div class="scan-vp">
+      <video id="scan-video" autoplay playsinline muted></video>
+      <div class="scan-ov">
+        <div class="dim-t"></div><div class="dim-b"></div>
+        <div class="dim-l"></div><div class="dim-r"></div>
+        <div class="scan-frame"><div class="scan-line"></div></div>
+        <div class="sc-tl"></div><div class="sc-tr"></div>
+        <div class="sc-bl"></div><div class="sc-br"></div>
+        <div class="scan-found-ov" id="scan-found"></div>
+        <div class="scan-tip-ov">จ่อบาร์โค้ดในกรอบ · Point barcode at frame</div>
+        <div class="scan-flash" id="scan-flash"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
+      <div style="flex:1;background:var(--bg);border-radius:10px;padding:10px 12px;text-align:center;">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:2px;">Detected ID</div>
+        <div style="font-size:20px;font-family:'DM Mono',monospace;font-weight:600;letter-spacing:3px;" id="scan-id-disp">—</div>
+      </div>
+      <button class="btn btn-s" onclick="flipScanCam()" style="min-height:56px;padding:10px 14px;font-size:20px;">⟳</button>
+    </div>
+    <div style="margin-top:6px;font-size:11px;color:var(--text3);text-align:center;">สแกนสำเร็จ → ถ่ายรูปอัตโนมัติ · Auto-advances after scan</div>
+    <div class="divider"></div>
+    <!-- Manual fallback -->
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:7px;">หากสแกนไม่ได้ พิมพ์เองได้เลย · Can't scan? Type manually</div>
+    <div style="display:flex;gap:8px;">
+      <input id="scan-manual" class="manual-input" type="text" inputmode="numeric" maxlength="8"
+        placeholder="12345678" oninput="onManualScanInput(this)"/>
+      <button class="btn btn-p" style="padding:10px 14px;min-height:48px;" onclick="confirmManualScan()">Go →</button>
+    </div>
+    <div class="folder-row">
+      <div class="folder-row-icon">📁</div>
+      <div class="folder-row-info">
+        <div class="folder-row-label">Saving to</div>
+        <div class="folder-row-name" id="p2-folder-name">—</div>
+      </div>
+      <button class="btn btn-s folder-row-btn" onclick="goChangeFolder()">Change</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAGE 2: BADGE PHOTO ═══ -->
+<div id="pg-cam" class="pg hidden">
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-title">Badge Photo</span>
+      <span class="tag tag-gold" id="cam-id-tag"></span>
+    </div>
+    <div class="cam-wrap portrait" id="cam-wrap">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="canvas-capture"></canvas>
+      <div class="b-ov">
+        <div class="b-top"></div><div class="b-bot"></div>
+        <div class="b-left"></div><div class="b-right"></div>
+        <div class="b-head"></div><div class="b-shoulder"></div>
+        <div class="b-gh"></div><div class="b-gv"></div>
+        <div class="bc bc-tl"></div><div class="bc bc-tr"></div>
+        <div class="bc bc-bl"></div><div class="bc bc-br"></div>
+        <div class="b-tip">จัดใบหน้าให้อยู่ในกรอบ · Align face in frame</div>
+        <div class="b-empid" id="cam-empid"></div>
+        <div class="cring" id="cring">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-bg" cx="32" cy="32" r="27"/>
+            <circle class="ring-fg" id="ring-fg" cx="32" cy="32" r="27"/>
+          </svg>
+          <div class="ring-n" id="ring-n">3</div>
+        </div>
+      </div>
+    </div>
+    <div class="cam-tip">พื้นหลังสีอ่อน · แสงสว่าง · มองตรงกล้อง</div>
+
+    <!-- PC controls -->
+    <div id="cam-pc-btns" class="btn-row" style="margin-top:10px;">
+      <button class="btn btn-s" onclick="flipBadgeCam()">⟳ Flip</button>
+      <button class="btn btn-p" onclick="takePhoto()">📷 Take Photo</button>
+    </div>
+    <!-- Camera selector (PC with multiple cameras) -->
+    <div id="cam-selector-wrap" class="hidden" style="margin-top:8px;">
+      <select id="cam-selector" onchange="switchCamera(this.value)"
+        style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:10px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;cursor:pointer;">
+      </select>
+    </div>
+    <!-- Phone shutter -->
+    <div id="cam-phone-shutter" class="shutter-wrap hidden">
+      <button class="btn btn-s" onclick="flipBadgeCam()" style="min-height:44px;padding:10px 16px;">⟳</button>
+      <button class="shutter-btn" onclick="takePhoto()"><div class="shutter-inner"></div></button>
+      <div style="width:80px;"></div>
+    </div>
+    <button class="btn btn-s btn-full" style="margin-top:8px;font-size:12px;" onclick="backToStep1()">← Back</button>
+  </div>
+</div>
+
+<!-- ═══ PAGE 2B: PREVIEW ═══ -->
+<div id="pg-prev" class="pg hidden">
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-title">Review Photo</span>
+      <span class="tag tag-gold" id="prev-id-tag"></span>
+    </div>
+    <div class="preview-wrap portrait" id="preview-wrap">
+      <img id="preview-img"/>
+      <div class="prev-stamp" id="prev-stamp"></div>
+    </div>
+    <div class="btn-row" style="margin-top:10px;">
+      <button class="btn btn-s" onclick="retake()">← Retake</button>
+      <button class="btn btn-g" onclick="approvePhoto()">✓ Use Photo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAGE 3: SAVE ═══ -->
+<div id="pg-save" class="pg hidden">
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-title">Saving Photo</span>
+      <span class="tag tag-gold" id="save-id-tag"></span>
+    </div>
+    <div class="save-item">
+      <div class="save-icon" style="background:#dbeafe;">📷</div>
+      <div class="save-info">
+        <div class="save-name" id="save-fname"></div>
+        <div class="save-meta" id="save-meta">Saving…</div>
+        <div class="pbar"><div class="pfill" id="pfill" style="width:0%"></div></div>
+      </div>
+      <div class="save-chk" id="photo-chk">⏳</div>
+    </div>
+    <div id="save-ok" class="ok-box hidden">
+      <div class="ok-icon">✅</div>
+      <div class="ok-title" id="save-ok-title">Saved</div>
+      <div class="ok-sub" id="save-path"></div>
+    </div>
+    <button class="btn btn-s btn-full hidden" id="btn-redownload" style="margin-top:8px;font-size:13px;" onclick="reDownload()">⬇ Download Again</button>
+    <button class="btn btn-p btn-full hidden" id="btn-next" style="margin-top:10px;" onclick="restart()">+ Next Employee</button>
+  </div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /app -->
+
+<script>
+const $ = id => document.getElementById(id);
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
+// ─ DEVICE DETECTION ──────────────────────────────────────────
+const IS_PHONE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+                 (navigator.maxTouchPoints > 1 && !/Win/.test(navigator.userAgent));
+const HAS_FOLDER_PICKER = 'showDirectoryPicker' in window;
+
+// ─ STATE ─────────────────────────────────────────────────────
+const S = {
+  mode:1, empId:'', photo:null,
+  badgeStream:null, scanStream:null,
+  badgeFacing: IS_PHONE ? 'user' : 'user',
+  scanFacing: IS_PHONE ? 'environment' : 'environment',
+  codeReader:null, scanning:false, decodeLoop:null,
+  ctTimer:null, detectLock:false, lastDetected:'',
+  folderHandle:null, skipFolder:false,
+  camW:1280, camH:720, badgeDeviceId:null,
+};
+
+// ─ INIT ──────────────────────────────────────────────────────
+(function init(){
+  // Device badge
+  const badge = $('device-badge');
+  badge.textContent = IS_PHONE ? '📱 Phone' : '🖥 PC';
+  badge.className = 'device-badge ' + (IS_PHONE ? 'device-phone' : 'device-pc');
+
+  // Show correct camera aspect on phone (landscape = square)
+  if(IS_PHONE){
+    $('cam-wrap').className = 'cam-wrap square';
+    $('preview-wrap').className = 'preview-wrap square';
+    $('cam-pc-btns').classList.add('hidden');
+    $('cam-phone-shutter').classList.remove('hidden');
+  }
+
+  // Show correct folder setup UI
+  if(IS_PHONE){
+    $('fs-pc').classList.add('hidden');
+    $('fs-phone').classList.remove('hidden');
+    $('pc-tip-card').classList.add('hidden');
+    $('fs-change-btn').classList.add('hidden');
+    $('s0lbl').textContent = 'Start';
+  }
+
+  setStep(0);
+  showPg('pg-folder');
+
+  // Enumerate cameras for PC selector (after permission granted)
+  if(!IS_PHONE) populateCameraList();
+})();
+
+async function populateCameraList(){
+  try{
+    // Need at least one permission grant first to get labels
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cams = devices.filter(d=>d.kind==='videoinput');
+    if(cams.length <= 1) return; // only one camera — no selector needed
+    const sel=$('cam-selector');
+    sel.innerHTML='';
+    cams.forEach((cam,i)=>{
+      const opt=document.createElement('option');
+      opt.value=cam.deviceId;
+      opt.textContent=cam.label||'Camera '+(i+1);
+      // Pre-select USB camera if label contains 'usb' or isn't 'integrated'
+      if(cam.label.toLowerCase().includes('usb')||
+         cam.label.toLowerCase().includes('external')||
+         (!cam.label.toLowerCase().includes('integrated')&&!cam.label.toLowerCase().includes('facetime')&&i>0)){
+        opt.selected=true;
+        S.badgeDeviceId=cam.deviceId;
+      }
+      sel.appendChild(opt);
+    });
+    if(!S.badgeDeviceId && cams[0]) S.badgeDeviceId=cams[0].deviceId;
+    $('cam-selector-wrap').classList.remove('hidden');
+  }catch(e){ console.warn('Camera list error:',e); }
+}
+
+function switchCamera(deviceId){
+  S.badgeDeviceId=deviceId;
+  stopBadgeCam();
+  startBadgeCam(false);
+}
+
+// ─ HELPERS ───────────────────────────────────────────────────
+function showPg(id){
+  ['pg-folder','pg-type','pg-scan','pg-cam','pg-prev','pg-save'].forEach(p=>$(p).classList.add('hidden'));
+  $(id).classList.remove('hidden');
+  void $(id).offsetWidth;
+  $(id).classList.add('pg');
+  window.scrollTo(0,0);
+}
+function setStep(n){
+  ['s0','s1','s2','s3'].forEach((id,i)=>{
+    const el=$(id); el.classList.remove('active','done');
+    if(i<n) el.classList.add('done');
+    else if(i===n) el.classList.add('active');
+  });
+}
+function setStatus(txt,cls){
+  $('stext').textContent=txt;
+  $('sdot').className='sdot'+(cls?' '+cls:'');
+}
+function updateFolderIndicators(){
+  const name = S.folderHandle ? S.folderHandle.name
+             : (IS_PHONE ? 'Phone Downloads' : 'Downloads folder');
+  const el1=$('p1-folder-name'), el2=$('p2-folder-name');
+  if(el1) el1.textContent=name;
+  if(el2) el2.textContent=name;
+}
+
+// ─ FOLDER SETUP ──────────────────────────────────────────────
+function showFsSetup(){
+  $('fs-done').classList.add('hidden');
+  if(IS_PHONE){
+    $('fs-phone').classList.remove('hidden');
+  } else {
+    $('fs-pc').classList.remove('hidden');
+  }
+}
+
+async function pickFolderSetup(){
+  if(!HAS_FOLDER_PICKER){ skipFolderSetup(); return; }
+  try{
+    const handle = await window.showDirectoryPicker({mode:'readwrite', startIn:'desktop'});
+    S.folderHandle = handle; S.skipFolder = false;
+    $('fs-folder-name').textContent = handle.name;
+    showFsDone('✅ Ready','tag-green');
+    updateFolderIndicators();
+  } catch(e){
+    if(e.name!=='AbortError') alert('Could not open folder: '+e.message);
+  }
+}
+
+function skipFolderSetup(){
+  S.folderHandle = null; S.skipFolder = true;
+  $('fs-folder-name').textContent = IS_PHONE ? 'Phone Downloads' : 'Downloads folder';
+  showFsDone(IS_PHONE ? '📱 Phone' : '⬇ Downloads', IS_PHONE ? 'tag-green' : 'tag-gold');
+  updateFolderIndicators();
+}
+
+function showFsDone(tagText, tagClass){
+  $('fs-pc').classList.add('hidden');
+  $('fs-phone').classList.add('hidden');
+  $('fs-done').classList.remove('hidden');
+  $('folder-setup-tag').textContent = tagText;
+  $('folder-setup-tag').className = 'tag ' + tagClass;
+}
+
+function proceedToMain(){
+  setStep(1);
+  if(S.mode===1){
+    showPg('pg-type');
+    if(!IS_PHONE) setTimeout(()=>$('emp-input').focus(),80);
+  } else {
+    resetScanUI();
+    showPg('pg-scan');
+    startScanCam();
+  }
+}
+
+function goChangeFolder(){
+  stopScanCam(); pauseBadgeCam(); clearInterval(S.ctTimer);
+  showFsSetup();
+  $('folder-setup-tag').textContent='⚙️ Setup';
+  $('folder-setup-tag').className='tag tag-blue';
+  setStep(0);
+  showPg('pg-folder');
+}
+
+// ─ MODE SWITCH ───────────────────────────────────────────────
+function setMode(m){
+  S.mode=m;
+  $('mb1').classList.toggle('active',m===1);
+  $('mb2').classList.toggle('active',m===2);
+  $('s1lbl').textContent=m===1?'Employee ID':'Auto Scan';
+  stopScanCam(); pauseBadgeCam(); clearInterval(S.ctTimer);
+  S.detectLock=false; S.lastDetected='';
+  if($('pg-folder').classList.contains('hidden')===false) return;
+  setStep(1);
+  if(m===1){ showPg('pg-type'); if(!IS_PHONE) setTimeout(()=>$('emp-input').focus(),80); }
+  else { resetScanUI(); showPg('pg-scan'); startScanCam(); }
+}
+
+// ─ MODE 1: TYPE ──────────────────────────────────────────────
+const empIn=$('emp-input');
+empIn.addEventListener('input',e=>{
+  let v=e.target.value.replace(/\D/g,'').slice(0,8);
+  e.target.value=v; S.empId=v;
+  updateDots(v.length);
+  $('emp-clear').classList.toggle('show',v.length>0);
+  if(v.length===8){
+    empIn.classList.add('filled','pulse');
+    setTimeout(()=>empIn.classList.remove('pulse'),400);
+    updateDots(8,true);
+    setTimeout(goToCamera,360);
+  } else { empIn.classList.remove('filled'); }
+});
+empIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&S.empId.length===8)goToCamera();});
+
+function updateDots(n,complete){
+  for(let i=0;i<8;i++){
+    const d=$('ed'+i); d.classList.remove('filled','complete');
+    if(complete&&i<n) d.classList.add('complete');
+    else if(i<n) d.classList.add('filled');
+  }
+}
+function clearEmp(){
+  empIn.value=''; S.empId='';
+  empIn.classList.remove('filled');
+  $('emp-clear').classList.remove('show');
+  updateDots(0);
+}
+
+// ─ MODE 2: CAMERA BARCODE ────────────────────────────────────
+function resetScanUI(){
+  $('scan-tag').textContent='📷 Scanning…';
+  $('scan-tag').className='tag tag-orange';
+  $('scan-id-disp').textContent='—';
+  $('scan-found').classList.remove('show');
+  const mi=$('scan-manual'); if(mi) mi.value='';
+}
+
+async function startScanCam(){
+  try{
+    if(S.scanStream) S.scanStream.getTracks().forEach(t=>t.stop());
+    let stream=null;
+    if(IS_PHONE){
+      // Phone: try back camera first
+      try{
+        stream=await navigator.mediaDevices.getUserMedia({
+          video:{facingMode:{exact:'environment'},width:{ideal:1280},height:{ideal:720}}
+        });
+      }catch(e){
+        stream=await navigator.mediaDevices.getUserMedia({video:true});
+      }
+    } else {
+      // PC: use any available camera (webcam)
+      try{
+        stream=await navigator.mediaDevices.getUserMedia({
+          video:{facingMode:{exact:'environment'},width:{ideal:1280},height:{ideal:720}}
+        });
+      }catch(e){
+        stream=await navigator.mediaDevices.getUserMedia({
+          video:{width:{ideal:1280},height:{ideal:720}}
+        });
+      }
+    }
+    S.scanStream=stream;
+    const vid=$('scan-video');
+    vid.srcObject=stream;
+    await new Promise(r=>{vid.onloadedmetadata=r;});
+    vid.play().catch(()=>{});
+    setStatus('Scanning…','orange');
+    S.scanning=true;
+    await delay(700);
+    startCanvasDecoder();
+  }catch(err){
+    alert('Camera error: '+err.message+'\n\nPlease allow camera access in browser settings.');
+  }
+}
+
+function stopScanCam(){
+  S.scanning=false;
+  if(S.decodeLoop){clearInterval(S.decodeLoop);S.decodeLoop=null;}
+  if(S.codeReader){try{S.codeReader.reset();}catch(e){}S.codeReader=null;}
+  if(S.scanStream){S.scanStream.getTracks().forEach(t=>t.stop());S.scanStream=null;}
+}
+
+function startCanvasDecoder(){
+  if(S.decodeLoop) clearInterval(S.decodeLoop);
+  if(typeof ZXing==='undefined'){
+    $('scan-tag').textContent='⚠️ Use manual input';
+    return;
+  }
+  const hints=new Map();
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[
+    ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39,
+    ZXing.BarcodeFormat.CODE_93,  ZXing.BarcodeFormat.EAN_13,
+    ZXing.BarcodeFormat.EAN_8,    ZXing.BarcodeFormat.QR_CODE,
+    ZXing.BarcodeFormat.DATA_MATRIX, ZXing.BarcodeFormat.ITF,
+    ZXing.BarcodeFormat.CODABAR,
+  ]);
+  hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
+  const reader=new ZXing.BrowserMultiFormatReader(hints,200);
+  S.codeReader=reader;
+  const canvas=document.createElement('canvas');
+  const ctx=canvas.getContext('2d');
+  const vid=$('scan-video');
+  S.decodeLoop=setInterval(()=>{
+    if(!S.scanning||S.detectLock) return;
+    if(vid.readyState<2||vid.videoWidth===0) return;
+    canvas.width=vid.videoWidth; canvas.height=vid.videoHeight;
+    ctx.drawImage(vid,0,0);
+    try{
+      const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+      const lum=new ZXing.RGBLuminanceSource(imgData.data,canvas.width,canvas.height);
+      const bmp=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+      const result=reader.decodeBitmap(bmp);
+      if(result){
+        const raw=result.getText().replace(/\D/g,'');
+        if(raw.length>=4) onDetected(raw.slice(0,8).padStart(8,'0'));
+      }
+    }catch(e){}
+  },250);
+}
+
+function onDetected(id){
+  if(S.detectLock) return;
+  S.detectLock=true; S.lastDetected=id; S.empId=id;
+  $('scan-id-disp').textContent=id;
+  $('scan-found').textContent=id;
+  $('scan-found').classList.add('show');
+  $('scan-flash').classList.add('show');
+  $('scan-tag').textContent='✅ Found!';
+  $('scan-tag').className='tag tag-green';
+  setStatus('ID: '+id,'green');
+  setTimeout(()=>{ $('scan-flash').classList.remove('show'); stopScanCam(); goToCamera(); },700);
+}
+
+function onManualScanInput(el){
+  const v=el.value.replace(/\D/g,'').slice(0,8); el.value=v;
+  if(v.length===8) confirmManualScan();
+}
+function confirmManualScan(){
+  const v=$('scan-manual').value.replace(/\D/g,'');
+  if(!v.length){ $('scan-manual').focus(); return; }
+  $('scan-manual').value='';
+  onDetected(v.padStart(8,'0').slice(0,8));
+}
+
+function flipScanCam(){
+  S.scanFacing=S.scanFacing==='environment'?'user':'environment';
+  stopScanCam(); S.detectLock=false; S.lastDetected='';
+  startScanCam();
+}
+
+// ─ BADGE CAMERA ──────────────────────────────────────────────
+function goToCamera(){
+  $('cam-id-tag').textContent=S.empId;
+  $('cam-empid').textContent=S.empId;
+  const auto=S.mode===2;
+  $('cam-pc-btns').style.display=(!IS_PHONE&&!auto)?'flex':(auto?'none':!IS_PHONE?'flex':'none');
+  if(IS_PHONE){ $('cam-phone-shutter').classList.remove('hidden'); $('cam-pc-btns').classList.add('hidden'); }
+  else { $('cam-phone-shutter').classList.add('hidden'); $('cam-pc-btns').classList.remove('hidden'); }
+  $('cring').classList.toggle('show',auto);
+  setStep(2); showPg('pg-cam');
+  startBadgeCam(auto);
+}
+
+async function startBadgeCam(autoShoot){
+  try{
+    if(!S.badgeStream||S.badgeStream.getTracks()[0].readyState==='ended'){
+
+      let constraints;
+      if(IS_PHONE){
+        constraints={video:{facingMode:'user',width:{ideal:1280},height:{ideal:1280}}};
+      } else if(S.badgeDeviceId){
+        // Use specific selected camera (USB or built-in)
+        constraints={video:{
+          deviceId:{exact:S.badgeDeviceId},
+          width:{ideal:1280,max:1920},
+          height:{ideal:720,max:1080},
+          frameRate:{ideal:30,min:10}
+        }};
+      } else {
+        constraints={video:{
+          width:{ideal:1280,max:1920},
+          height:{ideal:720,max:1080},
+          frameRate:{ideal:30,min:10}
+        }};
+      }
+
+      try{
+        S.badgeStream=await navigator.mediaDevices.getUserMedia(constraints);
+      }catch(e){
+        // Fallback to any camera
+        S.badgeStream=await navigator.mediaDevices.getUserMedia({video:true});
+      }
+
+      // Log actual resolution
+      const track=S.badgeStream.getVideoTracks()[0];
+      const settings=track.getSettings();
+      console.log(`📷 Camera: ${track.label} — ${settings.width}x${settings.height}@${settings.frameRate}fps`);
+      S.camW=settings.width||1280;
+      S.camH=settings.height||720;
+
+      // After first grant, refresh camera list with labels
+      if(!IS_PHONE) setTimeout(populateCameraList, 500);
+    }
+
+    const v=$('video');
+    v.srcObject=S.badgeStream;
+
+    // Wait for frames to actually flow (not just metadata)
+    await new Promise(r=>{
+      v.onloadedmetadata=()=>{
+        v.play().then(()=>{
+          let frames=0;
+          const check=()=>{ frames++; if(frames>=3) r(); else requestAnimationFrame(check); };
+          requestAnimationFrame(check);
+        }).catch(r);
+      };
+    });
+
+    setStatus('Camera on','blue');
+    if(autoShoot){ await delay(400); startCountdown(3); }
+
+  }catch(err){
+    alert('Camera access denied: '+err.message+'\n\nPlease allow camera in browser settings.');
+  }
+}
+
+function pauseBadgeCam(){ clearInterval(S.ctTimer); const v=$('video'); if(v) v.pause(); }
+function resumeBadgeCam(){ const v=$('video'); if(v&&S.badgeStream){v.srcObject=S.badgeStream;v.play().catch(()=>{});} }
+function stopBadgeCam(){ clearInterval(S.ctTimer); if(S.badgeStream){S.badgeStream.getTracks().forEach(t=>t.stop());S.badgeStream=null;} }
+
+function startCountdown(sec){
+  const circ=170; let elapsed=0; const total=sec*1000; const tick=80;
+  $('ring-n').textContent=sec; $('ring-fg').style.strokeDashoffset=circ;
+  S.ctTimer=setInterval(()=>{
+    elapsed+=tick;
+    const frac=elapsed/total;
+    $('ring-fg').style.strokeDashoffset=circ-(circ*frac);
+    $('ring-n').textContent=Math.max(1,Math.ceil(sec-(frac*sec)));
+    if(elapsed>=total){clearInterval(S.ctTimer);takePhoto();}
+  },tick);
+}
+
+function flipBadgeCam(){
+  S.badgeFacing=S.badgeFacing==='user'?'environment':'user';
+  stopBadgeCam(); startBadgeCam(false);
+}
+
+function takePhoto(){
+  clearInterval(S.ctTimer);
+  const v=$('video');
+
+  // Use actual video dimensions — no forced upscale
+  const vw=v.videoWidth||S.camW||1280;
+  const vh=v.videoHeight||S.camH||720;
+
+  const c=$('canvas-capture');
+  c.width=vw; c.height=vh;
+
+  // Use requestAnimationFrame to grab on next paint = freshest frame
+  requestAnimationFrame(()=>{
+    const ctx=c.getContext('2d',{willReadFrequently:false});
+
+    // Mirror front camera on phone
+    if(IS_PHONE && S.badgeFacing==='user'){
+      ctx.translate(vw,0); ctx.scale(-1,1);
+    }
+    ctx.drawImage(v,0,0);
+    if(IS_PHONE && S.badgeFacing==='user') ctx.setTransform(1,0,0,1,0,0);
+
+    // Watermark bar
+    const bh=Math.round(vh*.048);
+    ctx.fillStyle='rgba(0,0,0,0.65)';
+    ctx.fillRect(0,vh-bh,vw,bh);
+    ctx.fillStyle='#ffffff';
+    ctx.font=`600 ${Math.round(bh*.46)}px "DM Mono",monospace`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(S.empId,vw/2,vh-bh/2);
+
+    // JPEG at 0.82 — sharp enough, much faster than 0.92
+    S.photo=c.toDataURL('image/jpeg',.82);
+    pauseBadgeCam();
+
+    $('preview-img').src=S.photo;
+    $('prev-stamp').textContent=S.empId;
+    $('prev-id-tag').textContent=S.empId;
+    showPg('pg-prev');
+  });
+}
+
+function retake(){
+  showPg('pg-cam');
+  resumeBadgeCam();
+  if(S.mode===2) startCountdown(3);
+}
+
+function approvePhoto(){
+  $('save-id-tag').textContent=S.empId;
+  $('save-fname').textContent=S.empId+'.jpg';
+  $('save-ok').classList.add('hidden');
+  $('btn-redownload').classList.add('hidden');
+  $('btn-next').classList.add('hidden');
+  $('pfill').style.width='0%';
+  $('photo-chk').textContent='⏳';
+  $('save-meta').textContent='Saving…';
+  setStep(3); showPg('pg-save');
+  if(S.folderHandle) saveToFolder();
+  else runDownloadSave();
+}
+
+function backToStep1(){
+  pauseBadgeCam(); clearInterval(S.ctTimer);
+  setStep(1);
+  if(S.mode===1){ showPg('pg-type'); if(!IS_PHONE) setTimeout(()=>empIn.focus(),80); }
+  else { resetScanUI(); showPg('pg-scan'); startScanCam(); }
+}
+
+// ─ SAVE ──────────────────────────────────────────────────────
+async function saveToFolder(){
+  animBar();
+  try{
+    const fname=S.empId+'.jpg';
+    const blob=dataURLtoBlob(S.photo);
+    const fh=await S.folderHandle.getFileHandle(fname,{create:true});
+    const writable=await fh.createWritable();
+    await writable.write(blob); await writable.close();
+    $('pfill').style.width='100%'; $('photo-chk').textContent='✅';
+    $('save-meta').textContent='Saved · '+fname;
+    $('save-ok-title').textContent='Saved to Folder ✓';
+    $('save-path').textContent='📁 '+S.folderHandle.name+' / '+fname;
+    $('save-ok').classList.remove('hidden');
+    $('btn-next').classList.remove('hidden');
+    setStatus('Saved ✓','green');
+  }catch(e){
+    $('save-meta').textContent='Folder save failed — downloading instead';
+    await delay(400); runDownloadSave();
+  }
+}
+
+async function runDownloadSave(){
+  animBar();
+  await delay(500);
+  const fname=S.empId+'.jpg';
+  downloadPhoto(fname);
+  $('pfill').style.width='100%'; $('photo-chk').textContent='✅';
+  $('save-meta').textContent='Downloaded · '+fname;
+  $('save-ok-title').textContent= IS_PHONE ? 'Downloaded to Phone ✓' : 'Downloaded ✓';
+  $('save-path').textContent= IS_PHONE
+    ? '📱 Check your Downloads or Gallery · Move to Google Drive app'
+    : '⬇ Downloads / '+fname+' · Move to Google Drive folder';
+  $('save-ok').classList.remove('hidden');
+  $('btn-redownload').classList.remove('hidden');
+  $('btn-next').classList.remove('hidden');
+  setStatus('Done ✓','green');
+}
+
+function downloadPhoto(fname){
+  const a=document.createElement('a');
+  a.href=S.photo; a.download=fname;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+function reDownload(){ downloadPhoto(S.empId+'.jpg'); }
+
+function animBar(){
+  let w=0;
+  const iv=setInterval(()=>{
+    w=Math.min(w+Math.random()*22,90);
+    $('pfill').style.width=w+'%';
+    if(w>=90)clearInterval(iv);
+  },70);
+}
+
+function dataURLtoBlob(d){
+  const[h,data]=d.split(',');
+  const mime=h.match(/:(.*?);/)[1];
+  const bin=atob(data); const arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
+
+// ─ RESTART ───────────────────────────────────────────────────
+function restart(){
+  S.empId=''; S.photo=null; S.detectLock=false; S.lastDetected='';
+  empIn.value=''; empIn.classList.remove('filled');
+  $('emp-clear').classList.remove('show');
+  updateDots(0);
+  $('pfill').style.width='0%'; $('photo-chk').textContent='⏳';
+  $('save-ok').classList.add('hidden');
+  $('btn-redownload').classList.add('hidden'); $('btn-next').classList.add('hidden');
+  setStatus('Ready',''); setStep(1);
+  if(S.mode===1){ showPg('pg-type'); if(!IS_PHONE) setTimeout(()=>empIn.focus(),100); }
+  else { resetScanUI(); showPg('pg-scan'); startScanCam(); }
+}
+</script>
+</body>
+</html>
