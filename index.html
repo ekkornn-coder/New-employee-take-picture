@@ -440,9 +440,9 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
     </div>
     <!-- Phone shutter -->
     <div id="cam-phone-shutter" class="shutter-wrap hidden">
-      <button class="btn btn-s" onclick="flipBadgeCam()" style="min-height:44px;padding:10px 16px;">⟳</button>
+      <button class="btn btn-s" id="phone-flip-btn" onclick="flipBadgeCam()" style="min-height:44px;padding:10px 14px;font-size:13px;">⟳ Front</button>
       <button class="shutter-btn" onclick="takePhoto()"><div class="shutter-inner"></div></button>
-      <div style="width:80px;"></div>
+      <div style="width:80px;text-align:center;font-size:10px;color:var(--text3);padding-top:4px;" id="cam-facing-label">Back cam</div>
     </div>
     <button class="btn btn-s btn-full" style="margin-top:8px;font-size:12px;" onclick="backToStep1()">← Back</button>
   </div>
@@ -508,7 +508,7 @@ const HAS_FOLDER_PICKER = 'showDirectoryPicker' in window;
 const S = {
   mode:1, empId:'', photo:null,
   badgeStream:null, scanStream:null,
-  badgeFacing: IS_PHONE ? 'user' : 'user',
+  badgeFacing: IS_PHONE ? 'environment' : 'user',
   scanFacing: IS_PHONE ? 'environment' : 'environment',
   codeReader:null, scanning:false, decodeLoop:null,
   ctTimer:null, detectLock:false, lastDetected:'',
@@ -888,7 +888,11 @@ async function startBadgeCam(autoShoot){
 
       let constraints;
       if(IS_PHONE){
-        constraints={video:{facingMode:'user',width:{ideal:1280},height:{ideal:1280}}};
+        // Use S.badgeFacing so flip button works correctly
+        constraints={video:{
+          facingMode:{ideal:S.badgeFacing},
+          width:{ideal:1280},height:{ideal:1280}
+        }};
       } else if(S.badgeDeviceId){
         // Use specific selected camera (USB or built-in)
         constraints={video:{
@@ -962,8 +966,17 @@ function startCountdown(sec){
 }
 
 function flipBadgeCam(){
-  S.badgeFacing=S.badgeFacing==='user'?'environment':'user';
-  stopBadgeCam(); startBadgeCam(false);
+  S.badgeFacing = S.badgeFacing==='user' ? 'environment' : 'user';
+  const isBack = S.badgeFacing==='environment';
+  // Update button labels
+  const pcFlip = $('cam-pc-btns')?.querySelector('button');
+  if(pcFlip) pcFlip.textContent = isBack ? '⟳ Front' : '⟳ Back';
+  const phoneFlip = $('phone-flip-btn');
+  if(phoneFlip) phoneFlip.textContent = isBack ? '⟳ Front' : '⟳ Back';
+  const facingLbl = $('cam-facing-label');
+  if(facingLbl) facingLbl.textContent = isBack ? 'Back cam' : 'Front cam';
+  stopBadgeCam();
+  startBadgeCam(false);
 }
 
 function takePhoto(){
