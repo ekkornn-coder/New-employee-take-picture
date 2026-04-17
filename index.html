@@ -315,11 +315,18 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
       <span class="card-title">Employee Number</span>
       <span class="tag tag-blue">⌨️ Type / Scan</span>
     </div>
-    <div class="emp-label">รหัสพนักงาน / Employee ID <span style="color:var(--text3)">(8 digits)</span></div>
+    <div class="emp-label">รหัสพนักงาน / Employee ID <span style="color:var(--text3)">(any format · 8 digits auto-advance)</span></div>
     <div class="emp-input-wrap">
-      <input class="emp-input" id="emp-input" type="text" inputmode="numeric"
-        maxlength="8" placeholder="· · · · · · · ·" autocomplete="off"/>
-      <button class="emp-clear" id="emp-clear" onclick="clearEmp()">✕</button>
+      <input class="emp-input" id="emp-input" type="text" inputmode="text"
+        maxlength="20" placeholder="A1 · 12345678 · ···" autocomplete="off"
+        style="letter-spacing:2px;font-size:22px;padding-right:90px;"/>
+      <div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);display:flex;gap:5px;align-items:center;">
+        <button class="emp-clear" id="emp-clear" onclick="clearEmp()" style="position:static;transform:none;opacity:1;pointer-events:all;">✕</button>
+        <button id="emp-go-btn" onclick="goToCamera()"
+          style="display:none;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">
+          Go →
+        </button>
+      </div>
     </div>
     <div class="emp-dots">
       <div class="edot" id="ed0"></div><div class="edot" id="ed1"></div>
@@ -361,17 +368,22 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
     <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
       <div style="flex:1;background:var(--bg);border-radius:10px;padding:10px 12px;text-align:center;">
         <div style="font-size:10px;color:var(--text3);margin-bottom:2px;">Detected ID</div>
-        <div style="font-size:20px;font-family:'DM Mono',monospace;font-weight:600;letter-spacing:3px;" id="scan-id-disp">—</div>
+        <div style="font-size:20px;font-family:'DM Mono',monospace;font-weight:600;letter-spacing:2px;" id="scan-id-disp">—</div>
       </div>
       <button class="btn btn-s" onclick="flipScanCam()" style="min-height:56px;padding:10px 14px;font-size:20px;">⟳</button>
     </div>
-    <div style="margin-top:6px;font-size:11px;color:var(--text3);text-align:center;">สแกนสำเร็จ → ถ่ายรูปอัตโนมัติ · Auto-advances after scan</div>
+    <!-- Confirm button for non-8-digit IDs (e.g. A1) -->
+    <button id="scan-confirm-btn" class="btn btn-g btn-full" style="margin-top:8px;display:none;" onclick="confirmScanned()">
+      ✓ Use this ID → Go to Photo
+    </button>
+    <div style="margin-top:6px;font-size:11px;color:var(--text3);text-align:center;">8 numeric digits → auto · Other format → press confirm</div>
     <div class="divider"></div>
     <!-- Manual fallback -->
     <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:7px;">หากสแกนไม่ได้ พิมพ์เองได้เลย · Can't scan? Type manually</div>
     <div style="display:flex;gap:8px;">
-      <input id="scan-manual" class="manual-input" type="text" inputmode="numeric" maxlength="8"
-        placeholder="12345678" oninput="onManualScanInput(this)"/>
+      <input id="scan-manual" class="manual-input" type="text" inputmode="text" maxlength="20"
+        placeholder="A1 or 12345678" style="text-transform:uppercase;"
+        oninput="onManualScanInput(this)"/>
       <button class="btn btn-p" style="padding:10px 14px;min-height:48px;" onclick="confirmManualScan()">Go →</button>
     </div>
     <div class="folder-row">
@@ -670,18 +682,27 @@ function setMode(m){
 // ─ MODE 1: TYPE ──────────────────────────────────────────────
 const empIn=$('emp-input');
 empIn.addEventListener('input',e=>{
-  let v=e.target.value.replace(/\D/g,'').slice(0,8);
+  // Allow any alphanumeric — no digit-only filter, no length limit (max 20)
+  let v=e.target.value.slice(0,20).toUpperCase();
   e.target.value=v; S.empId=v;
   updateDots(v.length);
   $('emp-clear').classList.toggle('show',v.length>0);
-  if(v.length===8){
+  $('emp-go-btn').style.display=v.length>0?'flex':'none';
+  // Auto-advance only when exactly 8 numeric digits
+  const isEight=/^\d{8}$/.test(v);
+  if(isEight){
     empIn.classList.add('filled','pulse');
     setTimeout(()=>empIn.classList.remove('pulse'),400);
     updateDots(8,true);
     setTimeout(goToCamera,360);
-  } else { empIn.classList.remove('filled'); }
+  } else {
+    empIn.classList.remove('filled');
+    if(v.length<8) updateDots(Math.min(v.length,8));
+  }
 });
-empIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&S.empId.length===8)goToCamera();});
+empIn.addEventListener('keydown',e=>{
+  if(e.key==='Enter' && S.empId.length>0) goToCamera();
+});
 
 function updateDots(n,complete){
   for(let i=0;i<8;i++){
@@ -694,7 +715,9 @@ function clearEmp(){
   empIn.value=''; S.empId='';
   empIn.classList.remove('filled');
   $('emp-clear').classList.remove('show');
+  $('emp-go-btn').style.display='none';
   updateDots(0);
+  empIn.focus();
 }
 
 // ─ MODE 2: CAMERA BARCODE ────────────────────────────────────
@@ -703,7 +726,15 @@ function resetScanUI(){
   $('scan-tag').className='tag tag-orange';
   $('scan-id-disp').textContent='—';
   $('scan-found').classList.remove('show');
+  $('scan-confirm-btn').style.display='none';
   const mi=$('scan-manual'); if(mi) mi.value='';
+}
+
+function confirmScanned(){
+  // Use whatever is currently showing in the detected ID display
+  const id=$('scan-id-disp').textContent.trim();
+  if(!id||id==='—') return;
+  onDetected(id);
 }
 
 async function startScanCam(){
@@ -772,6 +803,10 @@ function startCanvasDecoder(){
   const canvas=document.createElement('canvas');
   const ctx=canvas.getContext('2d');
   const vid=$('scan-video');
+
+  // Track consecutive same reads for stability
+  let lastRaw=''; let sameCount=0;
+
   S.decodeLoop=setInterval(()=>{
     if(!S.scanning||S.detectLock) return;
     if(vid.readyState<2||vid.videoWidth===0) return;
@@ -783,8 +818,18 @@ function startCanvasDecoder(){
       const bmp=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
       const result=reader.decodeBitmap(bmp);
       if(result){
-        const raw=result.getText().replace(/\D/g,'');
-        if(raw.length>=4) onDetected(raw.slice(0,8).padStart(8,'0'));
+        // Keep full original text — letters + numbers (trim whitespace only)
+        const raw=result.getText().trim();
+        if(raw.length>=1){
+          // Show detected ID immediately in display
+          $('scan-id-disp').textContent=raw;
+          $('scan-confirm-btn').style.display='flex';
+          // Count consecutive same reads for stability
+          if(raw===lastRaw){ sameCount++; } else { sameCount=1; lastRaw=raw; }
+          // Auto-advance only if 8 numeric digits read 2x in a row
+          const isEight=/^\d{8}$/.test(raw);
+          if(isEight && sameCount>=2) onDetected(raw);
+        }
       }
     }catch(e){}
   },250);
@@ -797,21 +842,25 @@ function onDetected(id){
   $('scan-found').textContent=id;
   $('scan-found').classList.add('show');
   $('scan-flash').classList.add('show');
-  $('scan-tag').textContent='✅ Found!';
+  $('scan-tag').textContent='✅ Found: '+id;
   $('scan-tag').className='tag tag-green';
   setStatus('ID: '+id,'green');
   setTimeout(()=>{ $('scan-flash').classList.remove('show'); stopScanCam(); goToCamera(); },700);
 }
 
 function onManualScanInput(el){
-  const v=el.value.replace(/\D/g,'').slice(0,8); el.value=v;
-  if(v.length===8) confirmManualScan();
+  // Allow any text — no digit filter
+  const v=el.value.slice(0,20).toUpperCase(); el.value=v;
+  $('scan-confirm-btn').style.display=v.length>0?'flex':'none';
+  // Still auto-advance on exactly 8 digits
+  if(/^\d{8}$/.test(v)) confirmManualScan();
 }
 function confirmManualScan(){
-  const v=$('scan-manual').value.replace(/\D/g,'');
-  if(!v.length){ $('scan-manual').focus(); return; }
+  const raw=$('scan-manual').value.trim().toUpperCase();
+  if(!raw.length){ $('scan-manual').focus(); return; }
   $('scan-manual').value='';
-  onDetected(v.padStart(8,'0').slice(0,8));
+  $('scan-confirm-btn').style.display='none';
+  onDetected(raw);
 }
 
 function flipScanCam(){
@@ -1054,6 +1103,7 @@ function restart(){
   S.empId=''; S.photo=null; S.detectLock=false; S.lastDetected='';
   empIn.value=''; empIn.classList.remove('filled');
   $('emp-clear').classList.remove('show');
+  $('emp-go-btn').style.display='none';
   updateDots(0);
   $('pfill').style.width='0%'; $('photo-chk').textContent='⏳';
   $('save-ok').classList.add('hidden');
