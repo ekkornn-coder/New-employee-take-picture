@@ -839,14 +839,20 @@ function confirmScanned(){
   onDetected(id);
 }
 
-// Decode image from canvas — tries full image + multiple crops
+// Decode image from canvas — resize first, try multiple crops + contrast boost
 async function decodeFromCanvas(canvas){
-  // Load ZXing dynamically if not yet loaded
+  // Load ZXing from jsdelivr (more reliable than unpkg)
   if(typeof ZXing==='undefined'){
     await new Promise((res,rej)=>{
       const s=document.createElement('script');
       s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.19.3/umd/index.min.js';
-      s.onload=res; s.onerror=rej;
+      s.onload=res; s.onerror=()=>{
+        // fallback CDN
+        const s2=document.createElement('script');
+        s2.src='https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.19.3/index.min.js';
+        s2.onload=res; s2.onerror=rej;
+        document.head.appendChild(s2);
+      };
       document.head.appendChild(s);
     });
   }
@@ -863,31 +869,85 @@ async function decodeFromCanvas(canvas){
   hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
   const reader=new ZXing.BrowserMultiFormatReader(hints);
 
-  const w=canvas.width, h=canvas.height;
+  // IMPORTANT: Resize large images — ZXing fails on >2MP images
+  // Target max 1200px on longest side
+  const MAX=1200;
+  const scale=Math.min(1, MAX/Math.max(canvas.width,canvas.height));
+  const rw=Math.round(canvas.width*scale);
+  const rh=Math.round(canvas.height*scale);
 
-  // Try multiple crops — full, center band, upper, lower, left-half, right-half
-  const crops=[
-    [0,    0,    w,    h   ],  // full image
-    [w*.05,h*.2, w*.9, h*.6],  // center
-    [w*.05,h*.05,w*.9, h*.4],  // upper half
-    [w*.05,h*.55,w*.9, h*.4],  // lower half
-    [0,    h*.3, w*.5, h*.4],  // left strip
-    [w*.5, h*.3, w*.5, h*.4],  // right strip
+  // Build resized canvases: normal + high contrast versions
+  const versions=[];
+
+  // Version 1: just resized
+  const c1=document.createElement('canvas');
+  c1.width=rw; c1.height=rh;
+  c1.getContext('2d').drawImage(canvas,0,0,rw,rh);
+  versions.push(c1);
+
+  // Version 2: grayscale + high contrast (helps with thermal printer receipts)
+  const c2=document.createElement('canvas');
+  c2.width=rw; c2.height=rh;
+  const ctx2=c2.getContext('2d');
+  ctx2.drawImage(canvas,0,0,rw,rh);
+  const id2=ctx2.getImageData(0,0,rw,rh);
+  const d=id2.data;
+  for(let i=0;i<d.length;i+=4){
+    // Grayscale
+    const g=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+    // Threshold: pixels below 128 → black, above → white
+    const v=g<128?0:255;
+    d[i]=d[i+1]=d[i+2]=v; d[i+3]=255;
+  }
+  ctx2.putImageData(id2,0,0);
+  versions.push(c2);
+
+  // Version 3: larger resize for QR codes (800px)
+  const c3=document.createElement('canvas');
+  const s3=Math.min(1, 800/Math.max(canvas.width,canvas.height));
+  c3.width=Math.round(canvas.width*s3);
+  c3.height=Math.round(canvas.height*s3);
+  c3.getContext('2d').drawImage(canvas,0,0,c3.width,c3.height);
+  versions.push(c3);
+
+  // Crops to try on each version: full, upper half, lower half, center
+  const cropDefs=(w,h)=>[
+    [0,    0,    w,   h  ],   // full
+    [0,    0,    w,   h/2],   // top half
+    [0,    h/2,  w,   h/2],   // bottom half
+    [w*.1, h*.2, w*.8,h*.6],  // center
+    [w*.05,h*.1, w*.9,h*.35], // upper band
+    [w*.05,h*.55,w*.9,h*.35], // lower band
   ];
 
-  for(const [sx,sy,sw,sh] of crops){
-    const tmp=document.createElement('canvas');
-    tmp.width=Math.round(sw); tmp.height=Math.round(sh);
-    tmp.getContext('2d').drawImage(canvas,sx,sy,sw,sh,0,0,tmp.width,tmp.height);
+  for(const src of versions){
+    const sw=src.width, sh=src.height;
+    // Try full first
+    const result=await tryDecode(reader,src,0,0,sw,sh);
+    if(result) return result;
+    // Try crops
+    for(const [cx,cy,cw,ch] of cropDefs(sw,sh)){
+      const r=await tryDecode(reader,src,cx,cy,cw,ch);
+      if(r) return r;
+    }
+  }
+  return null;
+}
+
+function tryDecode(reader,srcCanvas,sx,sy,sw,sh){
+  return new Promise(resolve=>{
     try{
+      const tmp=document.createElement('canvas');
+      tmp.width=Math.round(sw); tmp.height=Math.round(sh);
+      if(tmp.width<10||tmp.height<10){resolve(null);return;}
+      tmp.getContext('2d').drawImage(srcCanvas,sx,sy,sw,sh,0,0,tmp.width,tmp.height);
       const d=tmp.getContext('2d').getImageData(0,0,tmp.width,tmp.height);
       const lum=new ZXing.RGBLuminanceSource(d.data,tmp.width,tmp.height);
       const bmp=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
       const res=reader.decodeBitmap(bmp);
-      if(res) return res.getText();
-    }catch(e){}
-  }
-  return null;
+      resolve(res?res.getText():null);
+    }catch(e){ resolve(null); }
+  });
 }
 
 function startScanCam(){ /* no-op — we use file input now */ setStatus('Ready','blue'); }
