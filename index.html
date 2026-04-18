@@ -345,14 +345,16 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
   </div>
 </div>
 
-<!-- ═══ PAGE 1B: CAMERA SCAN (Mode 2) ═══ -->
+<!-- ═══ PAGE 1B: SNAP SCAN (Mode 2) ═══ -->
 <div id="pg-scan" class="pg hidden">
   <div class="card">
     <div class="card-hd">
-      <span class="card-title">Barcode Scanner</span>
-      <span class="tag tag-orange" id="scan-tag">📷 Scanning…</span>
+      <span class="card-title">Scan Barcode</span>
+      <span class="tag tag-orange" id="scan-tag">📷 Ready</span>
     </div>
-    <div class="scan-vp">
+
+    <!-- Viewfinder -->
+    <div class="scan-vp" id="scan-vp">
       <video id="scan-video" autoplay playsinline muted></video>
       <div class="scan-ov">
         <div class="dim-t"></div><div class="dim-b"></div>
@@ -360,32 +362,55 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
         <div class="scan-frame"><div class="scan-line"></div></div>
         <div class="sc-tl"></div><div class="sc-tr"></div>
         <div class="sc-bl"></div><div class="sc-br"></div>
+        <div class="scan-tip-ov">จ่อบาร์โค้ดในกรอบแล้วกด Capture · Point at barcode then tap Capture</div>
         <div class="scan-found-ov" id="scan-found"></div>
-        <div class="scan-tip-ov">จ่อบาร์โค้ดในกรอบ · Point barcode at frame</div>
         <div class="scan-flash" id="scan-flash"></div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
-      <div style="flex:1;background:var(--bg);border-radius:10px;padding:10px 12px;text-align:center;">
-        <div style="font-size:10px;color:var(--text3);margin-bottom:2px;">Detected ID</div>
-        <div style="font-size:20px;font-family:'DM Mono',monospace;font-weight:600;letter-spacing:2px;" id="scan-id-disp">—</div>
-      </div>
-      <button class="btn btn-s" onclick="flipScanCam()" style="min-height:56px;padding:10px 14px;font-size:20px;">⟳</button>
+
+    <!-- Capture + flip row -->
+    <div style="display:flex;gap:10px;align-items:center;margin-top:12px;">
+      <button class="btn btn-s" onclick="flipScanCam()" style="min-height:52px;padding:10px 14px;font-size:13px;flex-shrink:0;">⟳ Flip</button>
+      <button class="btn btn-p btn-full" id="scan-capture-btn" onclick="captureAndDecode()" style="min-height:52px;font-size:15px;font-weight:700;">
+        📸 Capture Barcode
+      </button>
     </div>
-    <!-- Confirm button for non-8-digit IDs (e.g. A1) -->
-    <button id="scan-confirm-btn" class="btn btn-g btn-full" style="margin-top:8px;display:none;" onclick="confirmScanned()">
-      ✓ Use this ID → Go to Photo
-    </button>
-    <div style="margin-top:6px;font-size:11px;color:var(--text3);text-align:center;">8 numeric digits → auto · Other format → press confirm</div>
+
+    <!-- Result area (hidden until capture) -->
+    <div id="scan-result-area" class="hidden" style="margin-top:12px;">
+      <div style="background:var(--bg);border-radius:12px;padding:14px;text-align:center;border:1.5px solid var(--border2);">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:5px;">Detected Barcode</div>
+        <div style="font-size:24px;font-family:'DM Mono',monospace;font-weight:700;letter-spacing:2px;color:var(--text);" id="scan-id-disp">—</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;" id="scan-result-type"></div>
+      </div>
+      <!-- Actions -->
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn btn-s" onclick="retryCapture()" style="flex:1;">↩ Retry</button>
+        <button class="btn btn-g" onclick="confirmScanned()" style="flex:2;font-size:15px;">✓ Use this ID →</button>
+      </div>
+    </div>
+
+    <!-- Not found state -->
+    <div id="scan-notfound-area" class="hidden" style="margin-top:12px;">
+      <div style="background:var(--red-l);border:1px solid #fca5a5;border-radius:12px;padding:12px;text-align:center;">
+        <div style="font-size:22px;margin-bottom:4px;">❌</div>
+        <div style="font-size:13px;font-weight:600;color:var(--red);">No barcode found</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;">Hold phone steady · Good lighting · Keep barcode in frame</div>
+      </div>
+      <button class="btn btn-p btn-full" style="margin-top:8px;" onclick="retryCapture()">↩ Try Again</button>
+    </div>
+
     <div class="divider"></div>
+
     <!-- Manual fallback -->
-    <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:7px;">หากสแกนไม่ได้ พิมพ์เองได้เลย · Can't scan? Type manually</div>
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:7px;">พิมพ์รหัสเองได้เลย · Type ID manually</div>
     <div style="display:flex;gap:8px;">
       <input id="scan-manual" class="manual-input" type="text" inputmode="text" maxlength="20"
         placeholder="A1 or 12345678" style="text-transform:uppercase;"
         oninput="onManualScanInput(this)"/>
       <button class="btn btn-p" style="padding:10px 14px;min-height:48px;" onclick="confirmManualScan()">Go →</button>
     </div>
+
     <div class="folder-row">
       <div class="folder-row-icon">📁</div>
       <div class="folder-row-info">
@@ -720,57 +745,55 @@ function clearEmp(){
   empIn.focus();
 }
 
-// ─ MODE 2: CAMERA BARCODE ────────────────────────────────────
+// ─ MODE 2: SNAP-TO-DECODE ────────────────────────────────────
 function resetScanUI(){
-  $('scan-tag').textContent='📷 Scanning…';
+  $('scan-tag').textContent='📷 Ready';
   $('scan-tag').className='tag tag-orange';
   $('scan-id-disp').textContent='—';
   $('scan-found').classList.remove('show');
-  $('scan-confirm-btn').style.display='none';
+  $('scan-result-area').classList.add('hidden');
+  $('scan-notfound-area').classList.add('hidden');
+  $('scan-capture-btn').disabled=false;
+  $('scan-capture-btn').textContent='📸 Capture Barcode';
   const mi=$('scan-manual'); if(mi) mi.value='';
 }
 
 function confirmScanned(){
-  // Use whatever is currently showing in the detected ID display
   const id=$('scan-id-disp').textContent.trim();
   if(!id||id==='—') return;
+  stopScanCam();
   onDetected(id);
+}
+
+function retryCapture(){
+  $('scan-result-area').classList.add('hidden');
+  $('scan-notfound-area').classList.add('hidden');
+  $('scan-capture-btn').disabled=false;
+  $('scan-capture-btn').textContent='📸 Capture Barcode';
+  $('scan-tag').textContent='📷 Ready';
+  $('scan-tag').className='tag tag-orange';
 }
 
 async function startScanCam(){
   try{
     if(S.scanStream) S.scanStream.getTracks().forEach(t=>t.stop());
     let stream=null;
-    if(IS_PHONE){
-      // Phone: try back camera first
-      try{
-        stream=await navigator.mediaDevices.getUserMedia({
-          video:{facingMode:{exact:'environment'},width:{ideal:1280},height:{ideal:720}}
-        });
-      }catch(e){
-        stream=await navigator.mediaDevices.getUserMedia({video:true});
-      }
-    } else {
-      // PC: use any available camera (webcam)
-      try{
-        stream=await navigator.mediaDevices.getUserMedia({
-          video:{facingMode:{exact:'environment'},width:{ideal:1280},height:{ideal:720}}
-        });
-      }catch(e){
-        stream=await navigator.mediaDevices.getUserMedia({
-          video:{width:{ideal:1280},height:{ideal:720}}
-        });
-      }
+    // Always try back camera first (better for barcodes), fall back to any
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({
+        video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}
+      });
+    }catch(e){
+      stream=await navigator.mediaDevices.getUserMedia({
+        video:{width:{ideal:1280},height:{ideal:720}}
+      });
     }
     S.scanStream=stream;
     const vid=$('scan-video');
     vid.srcObject=stream;
-    await new Promise(r=>{vid.onloadedmetadata=r;});
+    await new Promise(r=>{vid.onloadedmetadata=r; vid.onloadeddata=r;});
     vid.play().catch(()=>{});
-    setStatus('Scanning…','orange');
-    S.scanning=true;
-    await delay(700);
-    startCanvasDecoder();
+    setStatus('Ready','blue');
   }catch(err){
     alert('Camera error: '+err.message+'\n\nPlease allow camera access in browser settings.');
   }
@@ -783,12 +806,64 @@ function stopScanCam(){
   if(S.scanStream){S.scanStream.getTracks().forEach(t=>t.stop());S.scanStream=null;}
 }
 
-function startCanvasDecoder(){
-  if(S.decodeLoop) clearInterval(S.decodeLoop);
-  if(typeof ZXing==='undefined'){
-    $('scan-tag').textContent='⚠️ Use manual input';
-    return;
+// Snap a frame and decode it — called when user taps Capture
+async function captureAndDecode(){
+  const vid=$('scan-video');
+  if(!vid||vid.readyState<2||vid.videoWidth===0){
+    alert('Camera not ready yet — please wait a moment.'); return;
   }
+
+  // Disable button while processing
+  const btn=$('scan-capture-btn');
+  btn.disabled=true;
+  btn.textContent='⏳ Reading…';
+  $('scan-tag').textContent='⏳ Reading…';
+  $('scan-tag').className='tag tag-blue';
+
+  // Flash effect
+  $('scan-flash').classList.add('show');
+  setTimeout(()=>$('scan-flash').classList.remove('show'),200);
+
+  // Grab frame to canvas — use full camera resolution for best decode
+  const canvas=document.createElement('canvas');
+  canvas.width=vid.videoWidth;
+  canvas.height=vid.videoHeight;
+  const ctx=canvas.getContext('2d');
+  ctx.drawImage(vid,0,0);
+
+  // Try to decode
+  const result=await decodeFromCanvas(canvas);
+
+  if(result){
+    const id=result.trim().toUpperCase();
+    $('scan-id-disp').textContent=id;
+    $('scan-result-type').textContent=result.format||'';
+    $('scan-found').textContent=id;
+    $('scan-found').classList.add('show');
+    $('scan-result-area').classList.remove('hidden');
+    $('scan-notfound-area').classList.add('hidden');
+    $('scan-tag').textContent='✅ Found!';
+    $('scan-tag').className='tag tag-green';
+    setStatus('ID: '+id,'green');
+
+    // 8 numeric digits → auto proceed
+    if(/^\d{8}$/.test(id)){
+      await delay(500);
+      confirmScanned();
+    }
+  } else {
+    $('scan-result-area').classList.add('hidden');
+    $('scan-notfound-area').classList.remove('hidden');
+    $('scan-tag').textContent='❌ Not found';
+    $('scan-tag').className='tag tag-red';
+    btn.disabled=false;
+    btn.textContent='📸 Capture Barcode';
+  }
+}
+
+// Decode a canvas image using ZXing — tries multiple crops for better accuracy
+async function decodeFromCanvas(canvas){
+  if(typeof ZXing==='undefined') return null;
   const hints=new Map();
   hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[
     ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39,
@@ -798,68 +873,48 @@ function startCanvasDecoder(){
     ZXing.BarcodeFormat.CODABAR,
   ]);
   hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
-  const reader=new ZXing.BrowserMultiFormatReader(hints,200);
-  S.codeReader=reader;
-  const canvas=document.createElement('canvas');
+  const reader=new ZXing.BrowserMultiFormatReader(hints);
   const ctx=canvas.getContext('2d');
-  const vid=$('scan-video');
+  const w=canvas.width, h=canvas.height;
 
-  // Track consecutive same reads for stability
-  let lastRaw=''; let sameCount=0;
+  // Try crops: full image, center strip, top-third, bottom-third
+  const crops=[
+    {sx:0,    sy:0,      sw:w,   sh:h},         // full
+    {sx:w*.1, sy:h*.25,  sw:w*.8,sh:h*.5},      // center crop
+    {sx:w*.05,sy:h*.15,  sw:w*.9,sh:h*.35},     // upper band
+    {sx:w*.05,sy:h*.5,   sw:w*.9,sh:h*.35},     // lower band
+  ];
 
-  S.decodeLoop=setInterval(()=>{
-    if(!S.scanning||S.detectLock) return;
-    if(vid.readyState<2||vid.videoWidth===0) return;
-    canvas.width=vid.videoWidth; canvas.height=vid.videoHeight;
-    ctx.drawImage(vid,0,0);
+  for(const {sx,sy,sw,sh} of crops){
     try{
-      const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-      const lum=new ZXing.RGBLuminanceSource(imgData.data,canvas.width,canvas.height);
+      const tmp=document.createElement('canvas');
+      tmp.width=Math.round(sw); tmp.height=Math.round(sh);
+      tmp.getContext('2d').drawImage(canvas,sx,sy,sw,sh,0,0,tmp.width,tmp.height);
+      const imgData=tmp.getContext('2d').getImageData(0,0,tmp.width,tmp.height);
+      const lum=new ZXing.RGBLuminanceSource(imgData.data,tmp.width,tmp.height);
       const bmp=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
       const result=reader.decodeBitmap(bmp);
-      if(result){
-        // Keep full original text — letters + numbers (trim whitespace only)
-        const raw=result.getText().trim();
-        if(raw.length>=1){
-          // Show detected ID immediately in display
-          $('scan-id-disp').textContent=raw;
-          $('scan-confirm-btn').style.display='flex';
-          // Count consecutive same reads for stability
-          if(raw===lastRaw){ sameCount++; } else { sameCount=1; lastRaw=raw; }
-          // Auto-advance only if 8 numeric digits read 2x in a row
-          const isEight=/^\d{8}$/.test(raw);
-          if(isEight && sameCount>=2) onDetected(raw);
-        }
-      }
-    }catch(e){}
-  },250);
+      if(result) return result.getText();
+    }catch(e){ /* not found in this crop, try next */ }
+  }
+  return null;
 }
 
 function onDetected(id){
   if(S.detectLock) return;
   S.detectLock=true; S.lastDetected=id; S.empId=id;
-  $('scan-id-disp').textContent=id;
-  $('scan-found').textContent=id;
-  $('scan-found').classList.add('show');
-  $('scan-flash').classList.add('show');
-  $('scan-tag').textContent='✅ Found: '+id;
-  $('scan-tag').className='tag tag-green';
-  setStatus('ID: '+id,'green');
-  setTimeout(()=>{ $('scan-flash').classList.remove('show'); stopScanCam(); goToCamera(); },700);
+  stopScanCam();
+  goToCamera();
 }
 
 function onManualScanInput(el){
-  // Allow any text — no digit filter
   const v=el.value.slice(0,20).toUpperCase(); el.value=v;
-  $('scan-confirm-btn').style.display=v.length>0?'flex':'none';
-  // Still auto-advance on exactly 8 digits
   if(/^\d{8}$/.test(v)) confirmManualScan();
 }
 function confirmManualScan(){
   const raw=$('scan-manual').value.trim().toUpperCase();
   if(!raw.length){ $('scan-manual').focus(); return; }
   $('scan-manual').value='';
-  $('scan-confirm-btn').style.display='none';
   onDetected(raw);
 }
 
