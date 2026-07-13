@@ -839,22 +839,98 @@ function confirmScanned(){
   onDetected(id);
 }
 
-// Decode image from canvas — resize first, try multiple crops + contrast boost
+// Decode image from canvas — Native BarcodeDetector first (same as phone camera), ZXing fallback
 async function decodeFromCanvas(canvas){
+
+  // ═══ METHOD 1: Native BarcodeDetector API ═══
+  // Android Chrome has this built-in — SAME engine as phone camera app
+  if('BarcodeDetector' in window){
+    try{
+      const supported = await BarcodeDetector.getSupportedFormats();
+      console.log('BarcodeDetector formats:', supported);
+      const detector = new BarcodeDetector({
+        formats: supported.filter(f=>[
+          'code_128','code_39','code_93','ean_13','ean_8',
+          'qr_code','data_matrix','itf','codabar','upc_a','upc_e','pdf417'
+        ].includes(f))
+      });
+
+      // Try full resolution first — native detector handles big images fine
+      let barcodes = await detector.detect(canvas);
+      if(barcodes.length > 0){
+        console.log('Native detector found:', barcodes[0].rawValue);
+        return barcodes[0].rawValue;
+      }
+
+      // Try resized version too
+      const MAX=1600;
+      const sc=Math.min(1, MAX/Math.max(canvas.width,canvas.height));
+      if(sc < 1){
+        const rc=document.createElement('canvas');
+        rc.width=Math.round(canvas.width*sc);
+        rc.height=Math.round(canvas.height*sc);
+        rc.getContext('2d').drawImage(canvas,0,0,rc.width,rc.height);
+        barcodes = await detector.detect(rc);
+        if(barcodes.length > 0){
+          console.log('Native detector (resized) found:', barcodes[0].rawValue);
+          return barcodes[0].rawValue;
+        }
+      }
+
+      // Try high-contrast version
+      const hc=makeHighContrast(canvas, 1200);
+      barcodes = await detector.detect(hc);
+      if(barcodes.length > 0){
+        console.log('Native detector (contrast) found:', barcodes[0].rawValue);
+        return barcodes[0].rawValue;
+      }
+      console.log('Native detector: nothing found, falling back to ZXing');
+    }catch(e){
+      console.warn('BarcodeDetector error:', e);
+    }
+  } else {
+    console.log('No native BarcodeDetector — using ZXing');
+  }
+
+  // ═══ METHOD 2: ZXing fallback (iOS Safari, older browsers) ═══
+  return await decodeWithZXing(canvas);
+}
+
+// Build black/white high-contrast version (for thermal receipts)
+function makeHighContrast(canvas, maxSize){
+  const sc=Math.min(1, maxSize/Math.max(canvas.width,canvas.height));
+  const c=document.createElement('canvas');
+  c.width=Math.round(canvas.width*sc);
+  c.height=Math.round(canvas.height*sc);
+  const ctx=c.getContext('2d');
+  ctx.drawImage(canvas,0,0,c.width,c.height);
+  const id=ctx.getImageData(0,0,c.width,c.height);
+  const d=id.data;
+  for(let i=0;i<d.length;i+=4){
+    const g=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+    const v=g<128?0:255;
+    d[i]=d[i+1]=d[i+2]=v; d[i+3]=255;
+  }
+  ctx.putImageData(id,0,0);
+  return c;
+}
+
+async function decodeWithZXing(canvas){
   // Load ZXing from jsdelivr (more reliable than unpkg)
   if(typeof ZXing==='undefined'){
-    await new Promise((res,rej)=>{
-      const s=document.createElement('script');
-      s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.19.3/umd/index.min.js';
-      s.onload=res; s.onerror=()=>{
-        // fallback CDN
-        const s2=document.createElement('script');
-        s2.src='https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.19.3/index.min.js';
-        s2.onload=res; s2.onerror=rej;
-        document.head.appendChild(s2);
-      };
-      document.head.appendChild(s);
-    });
+    try{
+      await new Promise((res,rej)=>{
+        const s=document.createElement('script');
+        s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.19.3/umd/index.min.js';
+        s.onload=res; s.onerror=()=>{
+          const s2=document.createElement('script');
+          s2.src='https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.19.3/index.min.js';
+          s2.onload=res; s2.onerror=rej;
+          document.head.appendChild(s2);
+        };
+        document.head.appendChild(s);
+      });
+    }catch(e){ return null; }
   }
   if(typeof ZXing==='undefined') return null;
 
